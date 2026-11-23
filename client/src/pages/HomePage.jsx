@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Database, Flame, MapPin, Activity } from 'lucide-react';
+import { Database, Flame, MapPin, Activity, ChevronUp, ChevronDown, SlidersHorizontal, Map } from 'lucide-react';
 import Navbar from '../components/Navbar.jsx';
 import PlannerPanel from '../components/PlannerPanel.jsx';
 import RouteMap from '../components/RouteMap.jsx';
@@ -9,6 +9,9 @@ export default function HomePage() {
   const [routeResult, setRouteResult] = useState(null);
   const [selectedStationIndex, setSelectedStationIndex] = useState(null);
   const [stationStats, setStationStats] = useState(null);
+  
+  // Mobile bottom sheet state: 'preview' (compact ~80px preview) | 'half' (~50vh) | 'expanded' (~88vh)
+  const [sheetState, setSheetState] = useState('half');
 
   useEffect(() => {
     api
@@ -20,6 +23,16 @@ export default function HomePage() {
   const handleRouteCalculated = (data) => {
     setRouteResult(data);
     setSelectedStationIndex(null);
+    // After calculating, keep half open to see summary + map, or user can expand
+    setSheetState('half');
+  };
+
+  const cycleSheetState = () => {
+    setSheetState((prev) => {
+      if (prev === 'preview') return 'half';
+      if (prev === 'half') return 'expanded';
+      return 'preview';
+    });
   };
 
   return (
@@ -68,9 +81,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Main Split Operational Workspace */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-        <div className="w-full lg:w-[460px] xl:w-[490px] shrink-0 h-[52vh] lg:h-full overflow-hidden">
+      {/* Main Operational Workspace */}
+      <div className="flex-1 relative flex flex-col lg:flex-row min-h-0 overflow-hidden">
+        
+        {/* Desktop Side Panel (Visible only on lg and above) */}
+        <div className="hidden lg:block w-[460px] xl:w-[490px] shrink-0 h-full overflow-hidden border-r border-stone-200 dark:border-stone-800 z-10">
           <PlannerPanel
             routeResult={routeResult}
             onRouteCalculated={handleRouteCalculated}
@@ -78,9 +93,64 @@ export default function HomePage() {
             selectedStationIndex={selectedStationIndex}
           />
         </div>
-        <div className="flex-1 min-h-[320px] lg:h-full relative">
+
+        {/* Map Canvas: 100% full screen on mobile, fills remaining width on desktop */}
+        <div className="w-full h-full flex-1 relative z-0">
           <RouteMap routeResult={routeResult} focusedStationIndex={selectedStationIndex} />
         </div>
+
+        {/* Mobile / Tablet Bottom Sheet Drawer (Visible only on screens < lg) */}
+        <div
+          className={`lg:hidden absolute left-0 right-0 bottom-0 z-30 transition-all duration-300 ease-out flex flex-col bg-white dark:bg-stone-950 rounded-t-2xl shadow-2xl border-t border-stone-200 dark:border-stone-800 ${
+            sheetState === 'preview'
+              ? 'h-16'
+              : sheetState === 'half'
+              ? 'h-[50vh]'
+              : 'h-[86vh]'
+          }`}
+        >
+          {/* Drawer Drag Bar / Header */}
+          <div
+            onClick={cycleSheetState}
+            className="w-full py-2.5 px-4 flex items-center justify-between cursor-pointer select-none bg-stone-50 dark:bg-stone-900/90 rounded-t-2xl border-b border-stone-200/70 dark:border-stone-800 shrink-0 hover:bg-stone-100 dark:hover:bg-stone-800/80 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-1 rounded-full bg-stone-300 dark:bg-stone-600 block mr-1" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+              <span className="text-xs font-bold text-stone-800 dark:text-stone-200 tracking-tight">
+                {routeResult
+                  ? `Route Plan (${routeResult.fuelStops?.length || 0} stops • $${routeResult.totalCost?.toFixed(2) || '0'})`
+                  : 'Trip Planner & Stations'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400 text-xs font-semibold">
+              <span className="text-[11px] uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                {sheetState === 'preview' ? 'Tap to open' : sheetState === 'half' ? 'Tap for full' : 'Tap to minimize'}
+              </span>
+              {sheetState === 'expanded' ? (
+                <ChevronDown className="w-4 h-4 text-stone-600 dark:text-stone-300" />
+              ) : (
+                <ChevronUp className="w-4 h-4 text-stone-600 dark:text-stone-300" />
+              )}
+            </div>
+          </div>
+
+          {/* Drawer Content */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <PlannerPanel
+              routeResult={routeResult}
+              onRouteCalculated={handleRouteCalculated}
+              onSelectStation={(idx) => {
+                setSelectedStationIndex(idx);
+                // When selecting a station to inspect on map, snap to preview or half so map is visible
+                setSheetState('half');
+              }}
+              selectedStationIndex={selectedStationIndex}
+            />
+          </div>
+        </div>
+
       </div>
     </div>
   );
