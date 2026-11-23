@@ -1,0 +1,19 @@
+{
+  "name": "fuel-saver-server",
+  "version": "1.0.0",
+  "description": "Fuel Saver Express API (Zero-Database In-Memory Mode)",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "geocode": "node src/scripts/geocodeCities.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "csv-parse": "^5.6.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pdfkit": "^0.16.0"
+  }
+}
