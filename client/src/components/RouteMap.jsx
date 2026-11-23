@@ -252,7 +252,14 @@ export default function RouteMap({ routeResult, focusedStationIndex }) {
     const bounds = mainLine.getBounds();
     if (bounds.isValid()) {
       routeBoundsRef.current = bounds;
-      map.fitBounds(bounds, { padding: [60, 60] });
+      // On mobile screens (< 1024px), bottom sheet covers the lower 40-50% of the screen.
+      // Pad the bottom significantly so the route centers in the visible upper half!
+      const isMobile = window.innerWidth < 1024;
+      const paddingOptions = isMobile
+        ? { paddingTopLeft: [40, 40], paddingBottomRight: [40, Math.round(window.innerHeight * 0.45)] }
+        : { padding: [60, 60] };
+
+      map.fitBounds(bounds, paddingOptions);
     }
   }, [routeResult, activeStyleKey]);
 
@@ -280,7 +287,11 @@ export default function RouteMap({ routeResult, focusedStationIndex }) {
 
   const handleFitBounds = () => {
     if (mapRef.current && routeBoundsRef.current) {
-      mapRef.current.fitBounds(routeBoundsRef.current, { padding: [60, 60] });
+      const isMobile = window.innerWidth < 1024;
+      const paddingOptions = isMobile
+        ? { paddingTopLeft: [40, 40], paddingBottomRight: [40, Math.round(window.innerHeight * 0.45)] }
+        : { padding: [60, 60] };
+      mapRef.current.fitBounds(routeBoundsRef.current, paddingOptions);
     }
   };
 

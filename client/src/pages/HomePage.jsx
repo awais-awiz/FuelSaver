@@ -23,8 +23,11 @@ export default function HomePage() {
   const handleRouteCalculated = (data) => {
     setRouteResult(data);
     setSelectedStationIndex(null);
-    // After calculating, keep half open to see summary + map, or user can expand
-    setSheetState('half');
+    // On mobile, collapse to preview so the full route map is immediately visible!
+    // The user can easily tap the bottom bar to expand details anytime.
+    if (window.innerWidth < 1024) {
+      setSheetState('preview');
+    }
   };
 
   const cycleSheetState = () => {
